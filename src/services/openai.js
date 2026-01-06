@@ -5,7 +5,7 @@ const openai = new OpenAI({
     dangerouslyAllowBrowser: true // Required for client-side usage (demo only)
 });
 
-export const generateGutenbergBlocks = async (imageBase64, framework = 'gutenberg') => {
+export const generateGutenbergBlocks = async (input, framework = 'gutenberg', inputType = 'image', context = '') => {
     let systemPrompt = '';
 
     if (framework === 'spectra') {
@@ -41,6 +41,22 @@ export const generateGutenbergBlocks = async (imageBase64, framework = 'gutenber
           6. Ensure the markup is valid and can be pasted directly into the Code Editor in WordPress.`;
     }
 
+    const userContent = inputType === 'url' ? [
+        {
+            type: "text",
+            text: `I have a design at this URL: ${input}. ${context ? `\n\nUser Description/Context: ${context}` : ''}\n\nSince you cannot view external links directly, please generate a modern, high-quality Gutenberg layout based on the user's description (if provided) or infer it from the URL structure. If a description is present, PRIORITIZE it accurately.`
+        }
+    ] : [
+        { type: "text", text: `Convert this design into ${framework === 'spectra' ? 'Spectra' : 'Gutenberg'} blocks.` },
+        {
+            type: "image_url",
+            image_url: {
+                "url": input,
+                "detail": "high"
+            },
+        },
+    ];
+
     try {
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
@@ -51,16 +67,7 @@ export const generateGutenbergBlocks = async (imageBase64, framework = 'gutenber
                 },
                 {
                     role: "user",
-                    content: [
-                        { type: "text", text: `Convert this design into ${framework === 'spectra' ? 'Spectra' : 'Gutenberg'} blocks.` },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                "url": imageBase64,
-                                "detail": "high"
-                            },
-                        },
-                    ],
+                    content: userContent,
                 },
             ],
             temperature: 0.1,

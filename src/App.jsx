@@ -11,6 +11,8 @@ import DashboardHeader from './components/DashboardHeader';
 
 function App() {
   const [image, setImage] = useState(null);
+  const [inputType, setInputType] = useState('image'); // 'image' | 'url'
+  const [xdUrl, setXdUrl] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,6 +30,8 @@ function App() {
 
   const handleReset = () => {
     setImage(null);
+    setXdUrl('');
+    setInputType('image');
     setGeneratedCode('');
     setChatMessages([]);
     setError(null);
@@ -39,17 +43,30 @@ function App() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const handleImageSelect = async (imageDataUrl) => {
-    setImage(imageDataUrl);
+  const handleImageSelect = async (inputData) => {
+    // Handle both legacy string (image only) and new object format
+    const type = inputData.type || 'image';
+    const content = inputData.content || inputData;
+    const context = inputData.context || ''; // Get description if available
+
+    setInputType(type);
+    if (type === 'image') {
+      setImage(content);
+      setXdUrl('');
+    } else {
+      setXdUrl(content);
+      setImage(null);
+    }
+
     setIsLoading(true);
     setError(null);
     setGeneratedCode('');
     setChatMessages([]); // Reset chat on new upload
 
     try {
-      const code = await generateGutenbergBlocks(imageDataUrl, framework);
+      const code = await generateGutenbergBlocks(content, framework, type, context);
       setGeneratedCode(code);
-      setChatMessages([{ role: 'ai', content: 'I rendered the initial blocks based on your design. How can I refine it?' }]);
+      setChatMessages([{ role: 'ai', content: type === 'url' ? 'I analyzed the design from using the URL and your description. How can I refine it?' : 'I rendered the initial blocks based on your design. How can I refine it?' }]);
     } catch (err) {
       setError(err.message || 'Failed to generate blocks. Please try again.');
     } finally {
@@ -62,6 +79,7 @@ function App() {
     setError(null);
     setChatMessages([]);
     setImage(null); // Clear image if a template is selected
+    setXdUrl('');
 
     // Simulate a brief loading for UX
     setTimeout(() => {
@@ -136,8 +154,9 @@ function App() {
 
                 <ImageUpload
                   onImageSelect={handleImageSelect}
-                  currentImage={image}
-                  compact={!!image}
+                  currentImage={image || xdUrl}
+                  currentType={inputType}
+                  compact={!!(image || xdUrl)}
                 />
               </div>
             </div>
@@ -176,7 +195,7 @@ function App() {
             </div>
 
             {/* Additional Info / Stats could go here later */}
-            {(image || generatedCode) && (
+            {(image || xdUrl || generatedCode) && (
               <div className="card" style={{ padding: '1.5rem' }}>
                 <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>GENERATION STATUS</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
@@ -204,7 +223,7 @@ function App() {
               )}
             </div>
 
-            {!image && !generatedCode ? (
+            {(!image && !xdUrl && !generatedCode) ? (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
                 <div style={{
                   width: 64, height: 64, background: 'var(--bg-body)', borderRadius: '50%',
