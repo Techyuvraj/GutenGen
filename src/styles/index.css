@@ -117,8 +117,30 @@ body {
     padding: 0 0.5rem;
 }
 
-.sidebar-logo svg {
-    color: var(--accent-primary);
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.logo-text {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
+    background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Fallback will be handled by gradient if supported, else text-primary via inheritance if we remove this, but transparent is key for gradient text */
+    /* To be safe for better visibility without custom font load confirmation, simpler style: */
+    color: var(--text-primary);
 }
 
 .nav-section {
