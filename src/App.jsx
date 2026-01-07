@@ -149,6 +149,7 @@ function App() {
                     <option value="gutenberg">Gutenberg Core (Default)</option>
                     <option value="astra">Astra Theme Optimized</option>
                     <option value="spectra">Spectra Blocks (UAGB)</option>
+                    <option value="nexter">Nexter Blocks (The Plus Addons)</option>
                   </select>
                 </div>
 

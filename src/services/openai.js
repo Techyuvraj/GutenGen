@@ -18,6 +18,16 @@ export const generateGutenbergBlocks = async (input, framework = 'gutenberg', in
           3. Fallback to core blocks (wp:paragraph, wp:image) if a Spectra equivalent is overkill.
           4. Return ONLY the raw HTML content with Gutenberg comments.
           5. Ensure the markup is valid.`;
+    } else if (framework === 'nexter') {
+        systemPrompt = `You are an expert using Nexter Blocks (The Plus Addons for Gutenberg).
+          Your task is to analyze the provided design and generate the exact Gutenberg Block markup using Nexter Blocks (TPGB) where appropriate.
+          
+          Rules:
+          1. Use The Plus Addons blocks (wp:tpgb/container, wp:tpgb/advanced-typography, wp:tpgb/plus-image, wp:tpgb/button).
+          2. Use 'wp:tpgb/container' for all main layout sections (Rows/Columns/Flex).
+          3. Use 'wp:tpgb/advanced-typography' for headings and styled text.
+          4. Fallback to core blocks if a specific Nexter block doesn't exist for the purpose.
+          5. Return ONLY the raw HTML content with Gutenberg comments.`;
     } else if (framework === 'astra') {
         systemPrompt = `You are an expert WordPress developer specializing in the Astra Theme.
           Your task is to analyze the provided website image and generate the exact Gutenberg Block markup optimized for Astra.
