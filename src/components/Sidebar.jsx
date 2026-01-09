@@ -10,7 +10,8 @@ const Sidebar = ({
     currentImage,
     currentType,
     onTemplateSelect,
-    onHistorySelect
+    onHistorySelect,
+    sidebarView
 }) => {
     return (
         <aside className="sidebar">
@@ -27,85 +28,85 @@ const Sidebar = ({
                 marginRight: '-0.5rem',
                 marginBottom: '1rem'
             }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Upload Section */}
-                    <div className="card">
-                        <div className="card-header">
-                            <span>Upload Design</span>
-                        </div>
-                        <div style={{ padding: '1.5rem' }}>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                    Target Framework
-                                </label>
-                                <select
-                                    value={framework}
-                                    onChange={(e) => setFramework(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-color)',
-                                        backgroundColor: 'var(--bg-input)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '0.95rem',
-                                        outline: 'none'
-                                    }}
-                                >
-                                    <option value="gutenberg">Gutenberg Core (Default)</option>
-                                    <option value="astra">Astra Theme Optimized</option>
-                                    <option value="spectra">Spectra Blocks (UAGB)</option>
-                                    <option value="nexter">Nexter Blocks (The Plus Addons)</option>
-                                </select>
+                {sidebarView === 'default' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {/* Upload Section */}
+                        <div className="card">
+                            {/* ... existing upload content ... */}
+                            <div className="card-header">
+                                <span>Upload Design</span>
                             </div>
+                            <div style={{ padding: '1.5rem' }}>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                        Target Framework
+                                    </label>
+                                    <select
+                                        value={framework}
+                                        onChange={(e) => setFramework(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--border-color)',
+                                            backgroundColor: 'var(--bg-input)',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '0.95rem',
+                                            outline: 'none'
+                                        }}
+                                    >
+                                        <option value="gutenberg">Gutenberg Core (Default)</option>
+                                        <option value="astra">Astra Theme Optimized</option>
+                                        <option value="spectra">Spectra Blocks (UAGB)</option>
+                                        <option value="nexter">Nexter Blocks (The Plus Addons)</option>
+                                    </select>
+                                </div>
 
-                            <ImageUpload
-                                onImageSelect={onImageSelect}
-                                currentImage={currentImage}
-                                currentType={currentType}
-                                compact={!!currentImage}
-                            />
+                                <ImageUpload
+                                    onImageSelect={onImageSelect}
+                                    currentImage={currentImage}
+                                    currentType={currentType}
+                                    compact={!!currentImage}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Quick Start Templates */}
+                        <div className="card">
+                            <div className="card-header">
+                                <span>Quick Start Templates</span>
+                            </div>
+                            <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                                {TEMPLATES.map(template => (
+                                    <button
+                                        key={template.id}
+                                        onClick={() => onTemplateSelect(template.id)}
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            padding: '1rem',
+                                            background: 'var(--bg-body)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            textAlign: 'center'
+                                        }}
+                                        className="template-btn"
+                                    >
+                                        <span style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{template.name}</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{template.description}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-
-                    {/* Quick Start Templates */}
-                    <div className="card">
-                        <div className="card-header">
-                            <span>Quick Start Templates</span>
-                        </div>
-                        <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-                            {TEMPLATES.map(template => (
-                                <button
-                                    key={template.id}
-                                    onClick={() => onTemplateSelect(template.id)}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.5rem',
-                                        padding: '1rem',
-                                        background: 'var(--bg-body)',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        textAlign: 'center'
-                                    }}
-                                    className="template-btn"
-                                >
-                                    <span style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{template.name}</span>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{template.description}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* History Grid (Fixed/Separate) */}
-            <div style={{ marginBottom: '1.5rem' }}>
-                <HistoryGrid onSelect={onHistorySelect} />
+                ) : (
+                    <HistoryGrid onSelect={onHistorySelect} />
+                )}
             </div>
 
 

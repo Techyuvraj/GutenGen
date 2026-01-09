@@ -139,6 +139,7 @@ function AppContent() {
           setXdUrl('');
           setIsLoading(false);
         }}
+        sidebarView={sidebarView}
       />
 
       {/* Main Content Area */}
@@ -147,6 +148,8 @@ function AppContent() {
           theme={theme}
           toggleTheme={toggleTheme}
           onReset={handleReset}
+          sidebarView={sidebarView}
+          setSidebarView={setSidebarView}
         />
 
         <main className="dashboard-container">

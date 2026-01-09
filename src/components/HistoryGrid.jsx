@@ -74,7 +74,7 @@ const HistoryGrid = ({ onSelect }) => {
     if (history.length === 0) return null;
 
     return (
-        <div className="card" style={{ marginTop: '1.5rem' }}>
+        <div className="card" style={{ marginTop: '0' }}>
             <div className="card-header" style={{ justifyContent: 'space-between' }}>
                 <span>Your Recent Generations</span>
                 <button
@@ -91,7 +91,7 @@ const HistoryGrid = ({ onSelect }) => {
                     Clear All
                 </button>
             </div>
-            <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
                 {history.map(item => (
                     <div key={item.id} style={{ position: 'relative' }}>
                         <button
