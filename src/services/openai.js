@@ -1,9 +1,9 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true // Required for client-side usage (demo only)
-});
+// We now call our backend instead of OpenAI directly
+const API_URL = 'http://localhost:3007/api/openai/generate';
+
+const getAuthToken = () => localStorage.getItem('token');
 
 export const generateGutenbergBlocks = async (input, framework = 'gutenberg', inputType = 'image', context = '') => {
     let systemPrompt = '';
@@ -68,65 +68,75 @@ export const generateGutenbergBlocks = async (input, framework = 'gutenberg', in
     ];
 
     try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt
-                },
-                {
-                    role: "user",
-                    content: userContent,
-                },
-            ],
-            temperature: 0.1,
-            max_tokens: 4000,
+        console.log("Fetching URL:", API_URL);
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                systemPrompt,
+                userContent
+            })
         });
 
-        let content = response.choices[0].message.content;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate blocks');
+        }
+
+        const data = await response.json();
+        let content = data.content;
 
         // Clean up markdown if present
         content = content.replace(/```html/g, '').replace(/```/g, '').trim();
 
         return content;
     } catch (error) {
-        console.error("OpenAI API Error:", error);
+        console.error("Generation Error:", error);
         throw error;
     }
 };
 
 export const refineGutenbergBlocks = async (currentCode, userInstruction) => {
     try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "system",
-                    content: `You are an expert WordPress Gutenberg developer. 
+        const systemPrompt = `You are an expert WordPress Gutenberg developer. 
           Your task is to MODIFY the provided Gutenberg Block markup based on the user's request.
           
           Rules:
           1. Return ONLY the raw HTML content with Gutenberg comments. 
           2. Do not include markdown code fences or explanations.
           3. Maintain the existing structure unless asked to change it.
-          4. Ensure valid block syntax (e.g. <!-- wp:group -->).`
-                },
-                {
-                    role: "user",
-                    content: `CURRENT CODE:\n\n${currentCode}\n\nINSTRUCTION: ${userInstruction}`
-                },
-            ],
-            temperature: 0.1,
-            max_tokens: 4000,
+          4. Ensure valid block syntax (e.g. <!-- wp:group -->).`;
+
+        const userContent = `CURRENT CODE:\n\n${currentCode}\n\nINSTRUCTION: ${userInstruction}`;
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                systemPrompt,
+                userContent
+            })
         });
 
-        let content = response.choices[0].message.content;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to refine blocks');
+        }
+
+        const data = await response.json();
+        let content = data.content;
         content = content.replace(/```html/g, '').replace(/```/g, '').trim();
 
         return content;
+
     } catch (error) {
-        console.error("OpenAI Refinement Error:", error);
+        console.error("Refinement Error:", error);
         throw error;
     }
 };

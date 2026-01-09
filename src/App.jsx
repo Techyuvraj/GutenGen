@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import ImageUpload from './components/ImageUpload';
 import Template from './components/BlockPreview';
 import ChatInterface from './components/ChatInterface';
 import { generateGutenbergBlocks, refineGutenbergBlocks } from './services/openai';
 import { parseGutenbergToJSON } from './utils/blockParser';
-import { TEMPLATES, getTemplateCode } from './data/templates';
+import { getTemplateCode } from './data/templates';
 
 import Sidebar from './components/Sidebar';
 import DashboardHeader from './components/DashboardHeader';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function App() {
+function AppContent() {
   const [image, setImage] = useState(null);
   const [inputType, setInputType] = useState('image'); // 'image' | 'url'
   const [xdUrl, setXdUrl] = useState('');
@@ -21,6 +22,8 @@ function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [isRefining, setIsRefining] = useState(false);
   const [framework, setFramework] = useState('gutenberg');
+  const [copySuccess, setCopySuccess] = useState('');
+  const { logout, user } = useAuth();
 
   // Initialize theme
   React.useEffect(() => {
@@ -41,6 +44,12 @@ function App() {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const handleCopy = (text, type) => {
+    navigator.clipboard.writeText(text);
+    setCopySuccess(type);
+    setTimeout(() => setCopySuccess(''), 2000);
   };
 
   const handleImageSelect = async (inputData) => {
@@ -68,7 +77,13 @@ function App() {
       setGeneratedCode(code);
       setChatMessages([{ role: 'ai', content: type === 'url' ? 'I analyzed the design from using the URL and your description. How can I refine it?' : 'I rendered the initial blocks based on your design. How can I refine it?' }]);
     } catch (err) {
-      setError(err.message || 'Failed to generate blocks. Please try again.');
+      // Check for 401 or Unauthorized
+      if (err.message.includes('401') || err.message.toLowerCase().includes('unauthorized')) {
+        setError('Your session has expired. Please login again.');
+        logout();
+      } else {
+        setError(err.message || 'Failed to generate blocks. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +125,21 @@ function App() {
   return (
     <div className="app-layout">
       {/* Sidebar Navigation */}
-      <Sidebar />
+      <Sidebar
+        framework={framework}
+        setFramework={setFramework}
+        onImageSelect={handleImageSelect}
+        currentImage={image || xdUrl}
+        currentType={inputType}
+        onTemplateSelect={handleTemplateSelect}
+        onHistorySelect={(code, prompt) => {
+          setGeneratedCode(code);
+          setChatMessages([{ role: 'ai', content: `Loaded generation: "${prompt}"` }]);
+          setImage(null);
+          setXdUrl('');
+          setIsLoading(false);
+        }}
+      />
 
       {/* Main Content Area */}
       <div className="main-content">
@@ -121,94 +150,10 @@ function App() {
         />
 
         <main className="dashboard-container">
-          {/* Left Column: Upload */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div className="card">
-              <div className="card-header">
-                <span>Upload Design</span>
-              </div>
-              <div style={{ padding: '1.5rem' }}>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    Target Framework
-                  </label>
-                  <select
-                    value={framework}
-                    onChange={(e) => setFramework(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      backgroundColor: 'var(--bg-input)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
-                  >
-                    <option value="gutenberg">Gutenberg Core (Default)</option>
-                    <option value="astra">Astra Theme Optimized</option>
-                    <option value="spectra">Spectra Blocks (UAGB)</option>
-                    <option value="nexter">Nexter Blocks (The Plus Addons)</option>
-                  </select>
-                </div>
-
-                <ImageUpload
-                  onImageSelect={handleImageSelect}
-                  currentImage={image || xdUrl}
-                  currentType={inputType}
-                  compact={!!(image || xdUrl)}
-                />
-              </div>
-            </div>
-
-            {/* Quick Start Templates */}
-            <div className="card">
-              <div className="card-header">
-                <span>Quick Start Templates</span>
-              </div>
-              <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-                {TEMPLATES.map(template => (
-                  <button
-                    key={template.id}
-                    onClick={() => handleTemplateSelect(template.id)}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      padding: '1rem',
-                      background: 'var(--bg-body)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'center'
-                    }}
-                    className="template-btn"
-                  >
-                    <span style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{template.name}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{template.description}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Additional Info / Stats could go here later */}
-            {(image || xdUrl || generatedCode) && (
-              <div className="card" style={{ padding: '1.5rem' }}>
-                <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>GENERATION STATUS</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: generatedCode ? '#10B981' : '#F59E0B' }}></span>
-                  <span>{generatedCode ? 'Completed' : 'Pending Action'}</span>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Main Area: Results */}
 
           {/* Right Column: Results */}
-          <div className="card" style={{ minHeight: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+          <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
             <div className="card-header" style={{ justifyContent: 'space-between' }}>
               <span>Generated Code</span>
               {generatedCode && (
@@ -278,10 +223,13 @@ function App() {
                             value={generatedCode}
                             readOnly
                           />
-                          <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
+                          <div style={{ position: 'absolute', top: '10px', right: '25px', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            {copySuccess === 'code' && (
+                              <span style={{ fontSize: '0.75rem', color: '#4ade80', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', borderRadius: '4px' }}>Copied!</span>
+                            )}
                             <button
                               className="btn-icon"
-                              onClick={() => navigator.clipboard.writeText(generatedCode)}
+                              onClick={() => handleCopy(generatedCode, 'code')}
                               title="Copy Code"
                               style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none' }}
                             >
@@ -306,10 +254,13 @@ function App() {
                             value={JSON.stringify(parseGutenbergToJSON(generatedCode), null, 2)}
                             readOnly
                           />
-                          <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
+                          <div style={{ position: 'absolute', top: '10px', right: '25px', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            {copySuccess === 'json' && (
+                              <span style={{ fontSize: '0.75rem', color: '#4ade80', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', borderRadius: '4px' }}>Copied!</span>
+                            )}
                             <button
                               className="btn-icon"
-                              onClick={() => navigator.clipboard.writeText(JSON.stringify(parseGutenbergToJSON(generatedCode), null, 2))}
+                              onClick={() => handleCopy(JSON.stringify(parseGutenbergToJSON(generatedCode), null, 2), 'json')}
                               title="Copy JSON"
                               style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none' }}
                             >
@@ -345,4 +296,12 @@ function App() {
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <AppContent />
+      </ProtectedRoute>
+    </AuthProvider>
+  );
+}
