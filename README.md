@@ -1,4 +1,8 @@
-# React + Vite
+# GutenGen
+
+Convert images into clean, responsive Gutenberg blocks using AI — instantly and accurately.
+
+## Development Setup (React + Vite)
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
